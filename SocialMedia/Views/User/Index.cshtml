@@ -1,0 +1,15 @@
+﻿@model SocialMedia.Models.UserModel
+
+<h1>Enter Login Details</h1>
+
+<form method="post">
+    <input type="text" asp-for="Username" placeholder="Username" />
+
+    <input type="password" asp-for="Password" placeholder="Password" />
+
+    <button type="submit">Submit</button>
+    
+    <a asp-controller="User" asp-action="CreateUser">Don't have Account </a>
+
+</form>
+

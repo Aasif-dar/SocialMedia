@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SocialMedia.Data;
 using SocialMedia.Models;
+using System.Security.Claims;
 
 namespace SocialMedia.Controllers
 {
@@ -13,43 +16,82 @@ namespace SocialMedia.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public IActionResult Create(int UserId)
+        // Show all posts
+        public IActionResult Index()
         {
+            var posts = _context.Posts
+                .Include(p => p.Comments)
+                .Include(p => p.Likes)
+                .ToList();
+
+            return View(posts);
+        }
+
+        // Create new post
+        [Authorize]
+        [HttpPost]
+        public IActionResult Create(string content)
+        {
+            var userId = int.Parse(
+                HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
+
             var post = new PostModel
             {
-                UserId = UserId,
+                Content = content,
+                UserId = userId
             };
-                
-            return View(post);
-        }
 
-        [HttpPost]
-        public IActionResult Create(PostModel post)
-        {
-
-            _context.Add(post);
+            _context.Posts.Add(post);
             _context.SaveChanges();
 
-
-             return RedirectToAction("UserDashboard", "User", new
-            {
-                UserId = post.UserId
-            });
-
+            return RedirectToAction("Index");
         }
 
-        public IActionResult Delete(int UserId)
+        // Like post
+        [Authorize]
+        [HttpPost]
+        public IActionResult Like(int postId)
         {
-            if(UserId != null)
-            {
-                _context.Posts.Remove(_context.Posts.Find(UserId)!);
-                _context.SaveChanges();
+            var userId = int.Parse(
+                HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
 
-                return RedirectToAction("HomeDashboard", "User");
+            if (!_context.Likes.Any(l => l.PostId == postId && l.UserId == userId))
+            {
+                _context.Likes.Add(new LikeModel
+                {
+                    PostId = postId,
+                    UserId = userId
+                });
+
+                _context.SaveChanges();
             }
 
-            return View();
+            var count = _context.Likes.Count(l => l.PostId == postId);
+            return Json(new { count });
+        }
+
+        // Add comment
+        [Authorize]
+        [HttpPost]
+        public IActionResult AddComment(int postId, string content)
+        {
+            var userId = int.Parse(
+                HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
+
+            var comment = new CommentModel
+            {
+                PostId = postId,
+                UserId = userId,
+                Content = content
+            };
+
+            _context.Comments.Add(comment);
+            _context.SaveChanges();
+
+            return Json(comment);
         }
     }
 }

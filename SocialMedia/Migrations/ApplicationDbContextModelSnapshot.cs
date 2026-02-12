@@ -21,7 +21,7 @@ namespace SocialMedia.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("SocialMedia.Models.CommentModel", b =>
+            modelBuilder.Entity("CommentModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -36,6 +36,30 @@ namespace SocialMedia.Migrations
                     b.Property<int>("PostId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("PostModelId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostModelId");
+
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("SocialMedia.Models.LikeModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
@@ -45,7 +69,7 @@ namespace SocialMedia.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Likes");
                 });
 
             modelBuilder.Entity("SocialMedia.Models.PostModel", b =>
@@ -70,17 +94,13 @@ namespace SocialMedia.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("SocialMedia.Models.UserModel", b =>
+            modelBuilder.Entity("UserModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -95,18 +115,25 @@ namespace SocialMedia.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("SocialMedia.Models.CommentModel", b =>
+            modelBuilder.Entity("CommentModel", b =>
+                {
+                    b.HasOne("SocialMedia.Models.PostModel", null)
+                        .WithMany("Comments")
+                        .HasForeignKey("PostModelId");
+                });
+
+            modelBuilder.Entity("SocialMedia.Models.LikeModel", b =>
                 {
                     b.HasOne("SocialMedia.Models.PostModel", "Post")
-                        .WithMany("Comments")
+                        .WithMany("Likes")
                         .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SocialMedia.Models.UserModel", "User")
-                        .WithMany("Comments")
+                    b.HasOne("UserModel", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Post");
@@ -116,8 +143,8 @@ namespace SocialMedia.Migrations
 
             modelBuilder.Entity("SocialMedia.Models.PostModel", b =>
                 {
-                    b.HasOne("SocialMedia.Models.UserModel", "User")
-                        .WithMany("Posts")
+                    b.HasOne("UserModel", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -128,13 +155,8 @@ namespace SocialMedia.Migrations
             modelBuilder.Entity("SocialMedia.Models.PostModel", b =>
                 {
                     b.Navigation("Comments");
-                });
 
-            modelBuilder.Entity("SocialMedia.Models.UserModel", b =>
-                {
-                    b.Navigation("Comments");
-
-                    b.Navigation("Posts");
+                    b.Navigation("Likes");
                 });
 #pragma warning restore 612, 618
         }

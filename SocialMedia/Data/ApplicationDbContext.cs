@@ -1,41 +1,27 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SocialMedia.Models;
+
 namespace SocialMedia.Data
 {
     public class ApplicationDbContext : DbContext
-    { 
+    {
+        public ApplicationDbContext(DbContextOptions options) : base(options) { }
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
-        public DbSet<UserModel> Users { get; set; } = null!;
-        public DbSet<PostModel> Posts { get; set; } = null!;
-        public DbSet<CommentModel> Comments { get; set; } = null!;
+        public DbSet<UserModel> Users => Set<UserModel>();
+        public DbSet<PostModel> Posts => Set<PostModel>();
+        public DbSet<CommentModel> Comments => Set<CommentModel>();
+        public DbSet<LikeModel> Likes => Set<LikeModel>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // User -> Posts (cascade)
-            modelBuilder.Entity<PostModel>()
-                .HasOne(p => p.User)
-                .WithMany(u => u.Posts)
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            base.OnModelCreating(modelBuilder);
 
-            // User -> Comments (cascade)
-            modelBuilder.Entity<CommentModel>()
-                .HasOne(c => c.User)
-                .WithMany(u => u.Comments)
-                .HasForeignKey(c => c.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Post -> Comments (NO cascade)
-            modelBuilder.Entity<CommentModel>()
-                .HasOne(c => c.Post)
-                .WithMany(p => p.Comments)
-                .HasForeignKey(c => c.PostId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<LikeModel>()
+                .HasOne(l => l.User)
+                .WithMany()
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
 
     }

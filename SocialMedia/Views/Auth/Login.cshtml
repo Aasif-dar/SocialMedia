@@ -1,0 +1,32 @@
+﻿<h2>Login</h2>
+
+<input id="username" placeholder="Username" />
+<input id="password" type="password" placeholder="Password" />
+<button onclick="login()">Login</button>
+
+<br />
+<br />
+
+<button onclick="goToRegister()">Create Your Account</button>
+
+<script>
+    function login() {
+        fetch('/Auth/Login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            })
+        })
+        .then(r => r.json())
+        .then(d => {
+            localStorage.setItem('token', d.token);
+            window.location = '/Post/Index';
+        });
+    }
+
+    function goToRegister() {
+        window.location = '/Auth/Register';
+    }
+</script>

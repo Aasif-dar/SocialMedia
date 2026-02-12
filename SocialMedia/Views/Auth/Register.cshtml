@@ -1,0 +1,21 @@
+﻿<script>
+    function register() {
+        fetch('/Auth/Register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('regUsername').value,
+                password: document.getElementById('regPassword').value
+            })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error("Failed");
+            return response.json();
+        })
+        .then(data => {
+            alert("User created successfully!");
+            window.location = '/Auth/Login';
+        })
+        .catch(err => alert("Registration failed"));
+    }
+</script>

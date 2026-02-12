@@ -1,0 +1,63 @@
+﻿@model List<PostModel>
+
+<h1>Posts</h1>
+
+<input id="postContent" placeholder="Write post..." />
+<button onclick="createPost()">Post</button>
+
+@foreach (var post in Model)
+{
+    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+        <p>@post.Content</p>
+
+        <button onclick="like(@post.Id)">❤️</button>
+        <span id="like-@post.Id">@post.Likes.Count</span>
+
+        <div id="comments-@post.Id">
+            @foreach (var c in post.Comments)
+            {
+                <p>- @c.Content</p>
+            }
+        </div>
+
+        <input id="comment-@post.Id" placeholder="Add comment" />
+        <button onclick="comment(@post.Id)">Send</button>
+    </div>
+}
+
+<script>
+    const token = localStorage.getItem('token');
+
+    function createPost() {
+        fetch('/Post/Create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': 'Bearer ' + token
+            },
+            body: 'content=' + document.getElementById('postContent').value
+        }).then(() => location.reload());
+    }
+
+    function like(id) {
+        fetch('/Post/Like?postId=' + id, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(r => r.json())
+        .then(d => document.getElementById('like-' + id).innerText = d.count);
+    }
+
+    function comment(id) {
+        fetch('/Post/AddComment?postId=' + id + '&content=' +
+            document.getElementById('comment-' + id).value, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(r => r.json())
+        .then(c => {
+            document.getElementById('comments-' + id)
+                .innerHTML += `<p>- ${c.content}</p>`;
+        });
+    }
+</script>

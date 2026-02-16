@@ -7,6 +7,7 @@ using System.Security.Claims;
 
 namespace SocialMedia.Controllers
 {
+    [Authorize]
     public class PostController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -16,24 +17,31 @@ namespace SocialMedia.Controllers
             _context = context;
         }
 
-        // Show all posts
+        // ==============================
+        // SHOW ALL POSTS
+        // ==============================
         public IActionResult Index()
         {
             var posts = _context.Posts
                 .Include(p => p.Comments)
                 .Include(p => p.Likes)
+                .OrderByDescending(p => p.Id)
                 .ToList();
 
             return View(posts);
         }
 
-        // Create new post
-        [Authorize]
+        // ==============================
+        // CREATE POST
+        // ==============================
         [HttpPost]
         public IActionResult Create(string content)
         {
+            if (string.IsNullOrWhiteSpace(content))
+                return RedirectToAction("Index");
+
             var userId = int.Parse(
-                HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
             );
 
             var post = new PostModel
@@ -48,16 +56,20 @@ namespace SocialMedia.Controllers
             return RedirectToAction("Index");
         }
 
-        // Like post
-        [Authorize]
+        // ==============================
+        // LIKE POST (AJAX)
+        // ==============================
         [HttpPost]
         public IActionResult Like(int postId)
         {
             var userId = int.Parse(
-                HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
             );
 
-            if (!_context.Likes.Any(l => l.PostId == postId && l.UserId == userId))
+            var alreadyLiked = _context.Likes
+                .Any(l => l.PostId == postId && l.UserId == userId);
+
+            if (!alreadyLiked)
             {
                 _context.Likes.Add(new LikeModel
                 {
@@ -69,16 +81,21 @@ namespace SocialMedia.Controllers
             }
 
             var count = _context.Likes.Count(l => l.PostId == postId);
+
             return Json(new { count });
         }
 
-        // Add comment
-        [Authorize]
+        // ==============================
+        // ADD COMMENT (AJAX)
+        // ==============================
         [HttpPost]
         public IActionResult AddComment(int postId, string content)
         {
+            if (string.IsNullOrWhiteSpace(content))
+                return BadRequest();
+
             var userId = int.Parse(
-                HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
             );
 
             var comment = new CommentModel
@@ -91,7 +108,11 @@ namespace SocialMedia.Controllers
             _context.Comments.Add(comment);
             _context.SaveChanges();
 
-            return Json(comment);
+            return Json(new
+            {
+                id = comment.Id,
+                content = comment.Content
+            });
         }
     }
 }

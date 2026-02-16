@@ -1,0 +1,43 @@
+﻿@model SocialMedia.Models.UserModel
+
+<style>
+    .profile {
+        width: 600px;
+        margin: auto;
+    }
+
+    .card {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+    }
+</style>
+
+<div class="profile">
+    <h2>👤 My Profile</h2>
+
+    <p><b>Username:</b> @Model.Username</p>
+    <p><b>Email:</b> @Model.Password</p>
+
+    <hr />
+
+    <h3>My Posts</h3>
+
+    @if (Model.Posts.Any())
+    {
+        foreach (var post in Model.Posts)
+        {
+            <div class="card">
+                <p>@post.Content</p>
+            </div>
+        }
+    }
+    else
+    {
+        <p>No posts yet.</p>
+    }
+
+    <br />
+    <a asp-controller="Post" asp-action="Index">🔙 Back to Home</a>
+</div>

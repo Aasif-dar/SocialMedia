@@ -1,32 +1,44 @@
-﻿<h2>Login</h2>
+﻿@{
+    ViewData["Title"] = "Login";
+}
 
-<input id="username" placeholder="Username" />
-<input id="password" type="password" placeholder="Password" />
-<button onclick="login()">Login</button>
-
-<br />
-<br />
-
-<button onclick="goToRegister()">Create Your Account</button>
-
-<script>
-    function login() {
-        fetch('/Auth/Login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value
-            })
-        })
-        .then(r => r.json())
-        .then(d => {
-            localStorage.setItem('token', d.token);
-            window.location = '/Post/Index';
-        });
+<style>
+    .container {
+        width: 350px;
+        margin: auto;
+        margin-top: 100px;
     }
 
-    function goToRegister() {
-        window.location = '/Auth/Register';
+    input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
     }
-</script>
+
+    button {
+        width: 100%;
+        padding: 10px;
+        background: #007bff;
+        color: white;
+        border: none;
+    }
+
+    a {
+        text-decoration: none;
+    }
+</style>
+
+<div class="container">
+    <h2>Login</h2>
+
+    <form method="post" asp-controller="Auth" asp-action="Login">
+        <input name="username" placeholder="Username" required />
+        <input name="password" type="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+    </form>
+
+    <br />
+    <a asp-controller="Auth" asp-action="Register">
+        Create Account
+    </a>
+</div>

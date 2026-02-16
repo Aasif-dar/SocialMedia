@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using SocialMedia.Data;
+using SocialMedia.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -10,53 +11,90 @@ namespace SocialMedia.Controllers
     public class AuthController : Controller
     {
         private readonly ApplicationDbContext _context;
-        public AuthController(ApplicationDbContext context) => _context = context;
 
-        public IActionResult Login() => View();
+        public AuthController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
+        // ================= LOGIN PAGE =================
+        [HttpGet]
+        public IActionResult Login()
+        {
+            return View();
+        }
 
+        // ================= LOGIN POST =================
         [HttpPost]
-        public IActionResult Login([FromBody] UserModel model)
+        public IActionResult Login(UserModel model)
         {
             var user = _context.Users
-                .FirstOrDefault(u => u.Username == model.Username
-                                  && u.Password == model.Password);
+                .FirstOrDefault(u =>
+                    u.Username == model.Username &&
+                    u.Password == model.Password);
 
             if (user == null)
-                return Unauthorized("Invalid credentials");
+            {
+                ViewBag.Error = "Invalid username or password";
+                return View();
+            }
 
             var claims = new[]
             {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Name, user.Username)
-    };
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username)
+            };
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes("JWT_SECRET_KEY_123")
+                Encoding.UTF8.GetBytes("THIS_IS_MY_SUPER_SECRET_KEY_1234567890")
             );
 
             var token = new JwtSecurityToken(
                 claims: claims,
                 expires: DateTime.Now.AddHours(2),
                 signingCredentials: new SigningCredentials(
-                    key, SecurityAlgorithms.HmacSha256)
+                    key,
+                    SecurityAlgorithms.HmacSha256)
             );
 
-            return Ok(new
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            // Store JWT in Cookie
+            Response.Cookies.Append("jwt", tokenString, new CookieOptions
             {
-                token = new JwtSecurityTokenHandler().WriteToken(token)
+                HttpOnly = true,
+                Secure = false, // use true only in HTTPS production
+                SameSite = SameSiteMode.Strict
             });
+
+            return RedirectToAction("Index", "Post");
         }
 
-
-        public IActionResult Register() => View();
-
-        [HttpPost]
-        public IActionResult Register([FromBody]UserModel user)
+        // ================= REGISTER PAGE =================
+        [HttpGet]
+        public IActionResult Register()
         {
+            return View();
+        }
+
+        // ================= REGISTER POST =================
+        [HttpPost]
+        public IActionResult Register(UserModel user)
+        {
+            if (!ModelState.IsValid)
+                return View(user);
+
             _context.Users.Add(user);
             _context.SaveChanges();
-            return Ok(new { message = "User created" });
+
+            return RedirectToAction("Login");
+        }
+
+        // ================= LOGOUT =================
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("jwt");
+            return RedirectToAction("Login");
         }
     }
 }

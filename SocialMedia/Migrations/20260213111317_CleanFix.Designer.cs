@@ -11,8 +11,8 @@ using SocialMedia.Data;
 namespace SocialMedia.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260211112032_Initial")]
-    partial class Initial
+    [Migration("20260213111317_CleanFix")]
+    partial class CleanFix
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,7 +24,7 @@ namespace SocialMedia.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("CommentModel", b =>
+            modelBuilder.Entity("SocialMedia.Models.CommentModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -39,15 +39,14 @@ namespace SocialMedia.Migrations
                     b.Property<int>("PostId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PostModelId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PostModelId");
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Comments");
                 });
@@ -118,11 +117,23 @@ namespace SocialMedia.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("CommentModel", b =>
+            modelBuilder.Entity("SocialMedia.Models.CommentModel", b =>
                 {
-                    b.HasOne("SocialMedia.Models.PostModel", null)
+                    b.HasOne("SocialMedia.Models.PostModel", "Post")
                         .WithMany("Comments")
-                        .HasForeignKey("PostModelId");
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UserModel", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SocialMedia.Models.LikeModel", b =>
@@ -134,7 +145,7 @@ namespace SocialMedia.Migrations
                         .IsRequired();
 
                     b.HasOne("UserModel", "User")
-                        .WithMany()
+                        .WithMany("Likes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -147,7 +158,7 @@ namespace SocialMedia.Migrations
             modelBuilder.Entity("SocialMedia.Models.PostModel", b =>
                 {
                     b.HasOne("UserModel", "User")
-                        .WithMany()
+                        .WithMany("Posts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -160,6 +171,15 @@ namespace SocialMedia.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Likes");
+                });
+
+            modelBuilder.Entity("UserModel", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Likes");
+
+                    b.Navigation("Posts");
                 });
 #pragma warning restore 612, 618
         }
